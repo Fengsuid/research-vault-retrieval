@@ -17,7 +17,8 @@ research-vault-retrieval/
 │   ├── evidence-levels.md         # L0–L3 定义、升降级、引文质量、反幻觉红线
 │   └── output-contract.md         # JSON 输出、答案模板、批量校验输入格式
 ├── scripts/
-│   └── rv_retrieval.py            # 单文件 CLI（标准库，Python 3.9+，只读）
+│   ├── rv_retrieval.py            # 单文件 CLI（标准库，Python 3.9+，只读）
+│   └── check_skill_spec.py        # SKILL.md 规范检查（CI 用）
 └── tests/
     └── test_rv_retrieval.py       # 36 个测试：布局识别、CJK、引文校验、只读性
 ```

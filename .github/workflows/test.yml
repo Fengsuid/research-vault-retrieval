@@ -15,12 +15,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        python: ["3.9", "3.12"]
+        include:
+          - os: ubuntu-24.04
+            python: "3.9"
+          - os: ubuntu-latest
+            python: "3.12"
+          - os: macos-latest
+            python: "3.12"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
 
@@ -31,44 +36,14 @@ jobs:
     name: SKILL.md spec check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
-      - name: Validate skill frontmatter
-        run: |
-          python - <<'PY'
-          import pathlib, re, sys
-
-          root = pathlib.Path(".")
-          skill = root / "SKILL.md"
-          text = skill.read_text(encoding="utf-8")
-          match = re.match(r"\A---\n(.*?)\n---\n", text, re.S)
-          if not match:
-              sys.exit("SKILL.md: missing YAML frontmatter")
-          frontmatter = match.group(1)
-          name = re.search(r"(?m)^name:\s*(.+)$", frontmatter)
-          description = re.search(r"(?ms)^description:\s*(.+?)(?=\n[a-z_]+:|\Z)", frontmatter)
-          if not name or not description:
-              sys.exit("SKILL.md: name and description are required")
-          value = name.group(1).strip().strip('"\'')
-          if not re.fullmatch(r"[a-z0-9-]{1,64}", value):
-              sys.exit(f"SKILL.md: invalid name {value!r}")
-          if value != root.name:
-              sys.exit(f"SKILL.md: name {value!r} must match the directory {root.name!r}")
-          length = len(" ".join(description.group(1).strip().strip('"\'').split()))
-          if length > 1024:
-              sys.exit(f"SKILL.md: description is {length} characters (max 1024)")
-
-          required = ["scripts/rv_retrieval.py", "references/retrieval-routing.md",
-                      "references/evidence-levels.md", "references/output-contract.md"]
-          missing = [item for item in required if not (root / item).is_file()]
-          if missing:
-              sys.exit("missing files: " + ", ".join(missing))
-          print(f"OK: name={value}, description={length} chars")
-          PY
+      - name: Validate skill frontmatter and files
+        run: python scripts/check_skill_spec.py
 
       - name: Check CLI help
         run: python scripts/rv_retrieval.py --help > /dev/null
